@@ -23,3 +23,43 @@ test('install-browser --help', async () => {
   const output = child_process.execSync(`node ${cliPath} install-browser --help`, { encoding: 'utf-8' });
   expect(output).toContain('install');
 });
+
+async function startCliServer(port: number): Promise<child_process.ChildProcess> {
+  const cp = child_process.spawn('node', [cliPath, `--port=${port}`, '--headless'], {
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+
+  let stderr = '';
+  await new Promise<void>((resolve, reject) => {
+    cp.stderr?.on('data', data => {
+      stderr += data.toString();
+      if (stderr.includes('Listening on'))
+        resolve();
+    });
+    cp.on('exit', () => reject(new Error(`CLI exited before startup. stderr:\n${stderr}`)));
+  });
+
+  return cp;
+}
+
+test('root endpoint returns 400', async () => {
+  const port = 9410;
+  const cp = await startCliServer(port);
+  try {
+    const response = await fetch(`http://localhost:${port}/`);
+    expect(response.status).toBe(400);
+  } finally {
+    cp.kill('SIGTERM');
+  }
+});
+
+test('unknown path returns 400', async () => {
+  const port = 9411;
+  const cp = await startCliServer(port);
+  try {
+    const response = await fetch(`http://localhost:${port}/favicon.ico`);
+    expect(response.status).toBe(400);
+  } finally {
+    cp.kill('SIGTERM');
+  }
+});
