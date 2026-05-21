@@ -1,20 +1,20 @@
 {
-  "name": "@playwright/mcp",
+  "name": "@madhupe-max/playwright-mcp",
   "version": "0.0.68",
   "description": "Playwright Tools for MCP",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/microsoft/playwright-mcp.git"
+    "url": "git+https://github.com/madhupe-max/playwright-mcp.git"
   },
-  "homepage": "https://playwright.dev",
+  "homepage": "https://github.com/madhupe-max/playwright-mcp",
   "engines": {
     "node": ">=18"
   },
   "author": {
-    "name": "Microsoft Corporation"
+    "name": "madhupe-max"
   },
   "license": "Apache-2.0",
-  "mcpName": "io.github.microsoft/playwright-mcp",
+  "mcpName": "io.github.madhupe-max/playwright-mcp",
   "scripts": {
     "lint": "node update-readme.js",
     "test": "playwright test",
