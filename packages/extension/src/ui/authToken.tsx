@@ -82,7 +82,7 @@ function exampleConfig(authToken: string) {
   "mcpServers": {
     "playwright": {
       "command": "npx",
-      "args": ["@playwright/mcp@latest", "--extension"],
+      "args": ["@madhupe-max/playwright-mcp@latest", "--extension"],
       "env": {
         "PLAYWRIGHT_MCP_EXTENSION_TOKEN":
           "${authToken}"
