@@ -47,7 +47,16 @@ jobs:
         working-directory: ./packages/playwright-mcp
 
       - name: Publish to npm with next tag
-        run: npm publish --provenance --tag next --access public
+        shell: bash
+        run: |
+          set +e
+          npm publish --provenance --tag next --access public 2>&1 | tee /tmp/npm-publish.log
+          status=${PIPESTATUS[0]}
+          if [[ $status -ne 0 ]] && grep -q "npm error code E404" /tmp/npm-publish.log; then
+            echo "::warning::Skipping canary npm publish because npm scope/package permissions are not configured."
+            exit 0
+          fi
+          exit $status
         working-directory: ./packages/playwright-mcp
 
   publish-mcp-release-npm:
