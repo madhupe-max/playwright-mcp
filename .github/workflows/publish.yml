@@ -50,11 +50,16 @@ jobs:
         shell: bash
         run: |
           set +e
-          npm publish --provenance --tag next --access public 2>&1 | tee /tmp/npm-publish.log
+          logfile=$(mktemp)
+          trap 'rm -f "$logfile"' EXIT
+          npm publish --provenance --tag next --access public 2>&1 | tee "$logfile"
           status=${PIPESTATUS[0]}
-          if [[ $status -ne 0 ]] && grep -q "npm error code E404" /tmp/npm-publish.log; then
-            echo "::warning::Skipping canary npm publish because npm scope/package permissions are not configured."
-            exit 0
+          if [[ $status -ne 0 ]]; then
+            error_code=$(sed -n 's/.*npm error code \([A-Z0-9]\+\).*/\1/p' "$logfile" | tail -n 1)
+            if [[ "$error_code" == "E404" ]]; then
+              echo "::warning::Skipping canary npm publish because npm scope/package permissions are not configured."
+              exit 0
+            fi
           fi
           exit $status
         working-directory: ./packages/playwright-mcp
