@@ -133,7 +133,7 @@ async function runCli(
     const testInfo = options.testInfo;
 
     // Path to the terminal CLI
-    const cliPath = path.join(__dirname, '../../../node_modules/playwright/lib/cli/client/program.js');
+    const cliPath = path.join(__dirname, '../../../node_modules/playwright-core/lib/tools/cli-client/program.js');
 
     return new Promise<CliResult>((resolve, reject) => {
       let stdout = '';
@@ -181,6 +181,9 @@ async function startWithExtensionFlag(browserWithExtension: BrowserWithExtension
     config: {
       browser: {
         userDataDir: browserWithExtension.userDataDir,
+        launchOptions: {
+          executablePath: chromium.executablePath(),
+        },
       }
     },
   });
@@ -372,6 +375,9 @@ test(`bypass connection dialog with token`, async ({ browserWithExtension, start
     config: {
       browser: {
         userDataDir: browserWithExtension.userDataDir,
+        launchOptions: {
+          executablePath: chromium.executablePath(),
+        },
       }
     },
   });
@@ -395,6 +401,9 @@ test.describe('CLI with extension', () => {
     await fs.writeFile(configPath, JSON.stringify({
       browser: {
         userDataDir: browserWithExtension.userDataDir,
+        launchOptions: {
+          executablePath: chromium.executablePath(),
+        },
       }
     }, null, 2));
 
