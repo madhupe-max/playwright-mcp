@@ -22,7 +22,7 @@ export default defineConfig<TestOptions>({
   testDir: './tests',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  workers: process.env.CI ? 2 : undefined,
+  workers: process.env.CI ? (process.platform === 'win32' ? 1 : 2) : undefined,
   reporter: 'list',
   projects: [
     { name: 'chrome' },

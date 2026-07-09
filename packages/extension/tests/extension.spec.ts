@@ -133,7 +133,7 @@ async function runCli(
     const testInfo = options.testInfo;
 
     // Path to the terminal CLI
-    const cliPath = path.join(__dirname, '../../../node_modules/playwright/lib/cli/client/program.js');
+    const cliPath = path.join(__dirname, '../../../node_modules/playwright-core/lib/tools/cli-client/program.js');
 
     return new Promise<CliResult>((resolve, reject) => {
       let stdout = '';
@@ -175,12 +175,15 @@ async function runCli(
   });
 }
 
-async function startWithExtensionFlag(browserWithExtension: BrowserWithExtension, startClient: StartClient): Promise<Client> {
+async function startWithExtensionFlag(browserWithExtension: BrowserWithExtension, startClient: StartClient, mcpBrowser?: string): Promise<Client> {
   const { client } = await startClient({
     args: [`--extension`],
     config: {
       browser: {
         userDataDir: browserWithExtension.userDataDir,
+        launchOptions: {
+          ...(mcpBrowser ? { channel: mcpBrowser } : {}),
+        },
       }
     },
   });
@@ -198,10 +201,10 @@ const testWithOldExtensionVersion = test.extend({
   },
 });
 
-test(`navigate with extension`, async ({ browserWithExtension, startClient, server }) => {
+test(`navigate with extension`, async ({ browserWithExtension, startClient, server, mcpBrowser }) => {
   const browserContext = await browserWithExtension.launch();
 
-  const client = await startWithExtensionFlag(browserWithExtension, startClient);
+  const client = await startWithExtensionFlag(browserWithExtension, startClient, mcpBrowser);
 
   const confirmationPagePromise = browserContext.waitForEvent('page', page => {
     return page.url().startsWith(`chrome-extension://${extensionId}/connect.html`);
@@ -221,7 +224,7 @@ test(`navigate with extension`, async ({ browserWithExtension, startClient, serv
   });
 });
 
-test(`snapshot of an existing page`, async ({ browserWithExtension, startClient, server }) => {
+test(`snapshot of an existing page`, async ({ browserWithExtension, startClient, server, mcpBrowser }) => {
   const browserContext = await browserWithExtension.launch();
 
   const page = await browserContext.newPage();
@@ -231,7 +234,7 @@ test(`snapshot of an existing page`, async ({ browserWithExtension, startClient,
   await browserContext.newPage();
   expect(browserContext.pages()).toHaveLength(3);
 
-  const client = await startWithExtensionFlag(browserWithExtension, startClient);
+  const client = await startWithExtensionFlag(browserWithExtension, startClient, mcpBrowser);
   expect(browserContext.pages()).toHaveLength(3);
 
   const confirmationPagePromise = browserContext.waitForEvent('page', page => {
@@ -255,12 +258,12 @@ test(`snapshot of an existing page`, async ({ browserWithExtension, startClient,
   expect(browserContext.pages()).toHaveLength(4);
 });
 
-test(`extension not installed timeout`, async ({ browserWithExtension, startClient, server, useShortConnectionTimeout }) => {
+test(`extension not installed timeout`, async ({ browserWithExtension, startClient, server, useShortConnectionTimeout, mcpBrowser }) => {
   useShortConnectionTimeout(100);
 
   const browserContext = await browserWithExtension.launch();
 
-  const client = await startWithExtensionFlag(browserWithExtension, startClient);
+  const client = await startWithExtensionFlag(browserWithExtension, startClient, mcpBrowser);
 
   const confirmationPagePromise = browserContext.waitForEvent('page', page => {
     return page.url().startsWith(`chrome-extension://${extensionId}/connect.html`);
@@ -277,13 +280,13 @@ test(`extension not installed timeout`, async ({ browserWithExtension, startClie
   await confirmationPagePromise;
 });
 
-testWithOldExtensionVersion(`works with old extension version`, async ({ browserWithExtension, startClient, server, useShortConnectionTimeout }) => {
+testWithOldExtensionVersion(`works with old extension version`, async ({ browserWithExtension, startClient, server, useShortConnectionTimeout, mcpBrowser }) => {
   useShortConnectionTimeout(500);
 
   // Prelaunch the browser, so that it is properly closed after the test.
   const browserContext = await browserWithExtension.launch();
 
-  const client = await startWithExtensionFlag(browserWithExtension, startClient);
+  const client = await startWithExtensionFlag(browserWithExtension, startClient, mcpBrowser);
 
   const confirmationPagePromise = browserContext.waitForEvent('page', page => {
     return page.url().startsWith(`chrome-extension://${extensionId}/connect.html`);
@@ -303,14 +306,14 @@ testWithOldExtensionVersion(`works with old extension version`, async ({ browser
   });
 });
 
-test(`extension needs update`, async ({ browserWithExtension, startClient, server, useShortConnectionTimeout, overrideProtocolVersion }) => {
+test(`extension needs update`, async ({ browserWithExtension, startClient, server, useShortConnectionTimeout, overrideProtocolVersion, mcpBrowser }) => {
   useShortConnectionTimeout(500);
   overrideProtocolVersion(1000);
 
   // Prelaunch the browser, so that it is properly closed after the test.
   const browserContext = await browserWithExtension.launch();
 
-  const client = await startWithExtensionFlag(browserWithExtension, startClient);
+  const client = await startWithExtensionFlag(browserWithExtension, startClient, mcpBrowser);
 
   const confirmationPagePromise = browserContext.waitForEvent('page', page => {
     return page.url().startsWith(`chrome-extension://${extensionId}/connect.html`);
@@ -358,7 +361,7 @@ test(`custom executablePath`, async ({ startClient, server, useShortConnectionTi
   expect(await fs.readFile(test.info().outputPath('output.txt'), 'utf8')).toMatch(new RegExp(`Custom exec args.*chrome-extension://${extensionId}/connect\\.html\\?`));
 });
 
-test(`bypass connection dialog with token`, async ({ browserWithExtension, startClient, server }) => {
+test(`bypass connection dialog with token`, async ({ browserWithExtension, startClient, server, mcpBrowser }) => {
   const browserContext = await browserWithExtension.launch();
 
   const page = await browserContext.newPage();
@@ -372,6 +375,9 @@ test(`bypass connection dialog with token`, async ({ browserWithExtension, start
     config: {
       browser: {
         userDataDir: browserWithExtension.userDataDir,
+        launchOptions: {
+          ...(mcpBrowser ? { channel: mcpBrowser } : {}),
+        },
       }
     },
   });
@@ -387,7 +393,7 @@ test(`bypass connection dialog with token`, async ({ browserWithExtension, start
 });
 
 test.describe('CLI with extension', () => {
-  test('open <url> --extension', async ({ browserWithExtension, cli, server }, testInfo) => {
+  test('open <url> --extension', async ({ browserWithExtension, cli, server, mcpBrowser }, testInfo) => {
     const browserContext = await browserWithExtension.launch();
 
     // Write config file with userDataDir 
@@ -395,6 +401,9 @@ test.describe('CLI with extension', () => {
     await fs.writeFile(configPath, JSON.stringify({
       browser: {
         userDataDir: browserWithExtension.userDataDir,
+        launchOptions: {
+          ...(mcpBrowser ? { channel: mcpBrowser } : {}),
+        },
       }
     }, null, 2));
 
